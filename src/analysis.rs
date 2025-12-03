@@ -8,19 +8,21 @@ use futures::future::BoxFuture;
 use nonempty::NonEmpty;
 use tracing::info;
 use tracing::warn;
-use wdl_analysis::Analyzer;
-use wdl_analysis::DiagnosticsConfig;
-use wdl_analysis::ProgressKind;
-use wdl_analysis::Validator;
-use wdl_lint::Linter;
+use wdl::analysis::Analyzer;
+use wdl::analysis::DiagnosticsConfig;
+use wdl::analysis::ProgressKind;
+use wdl::analysis::Validator;
+use wdl::lint::Linter;
 
 mod results;
 mod source;
 
 pub use results::AnalysisResults;
 pub use source::Source;
-use wdl_lint::Rule;
-use wdl_lint::TagSet;
+use wdl::lint::Rule;
+use wdl::lint::TagSet;
+
+use crate::IGNORE_FILENAME;
 
 /// The type of the initialization callback.
 type InitCb = Box<dyn Fn() + 'static>;
@@ -68,21 +70,9 @@ impl Analysis {
         self
     }
 
-    /// Adds a rule to the excepted rules list.
-    pub fn add_exception(mut self, rule: impl Into<String>) -> Self {
-        self.exceptions.insert(rule.into());
-        self
-    }
-
     /// Adds multiple rules to the excepted rules list.
     pub fn extend_exceptions(mut self, rules: impl IntoIterator<Item = String>) -> Self {
         self.exceptions.extend(rules);
-        self
-    }
-
-    /// Sets the ignorefile basename.
-    pub fn ignore_filename(mut self, filename: Option<String>) -> Self {
-        self.ignore_filename = filename;
         self
     }
 
@@ -122,7 +112,7 @@ impl Analysis {
         if self.enabled_lint_tags.count() > 0 && tracing::enabled!(tracing::Level::INFO) {
             let mut enabled_rules = vec![];
             let mut disabled_rules = vec![];
-            for rule in wdl_lint::rules() {
+            for rule in wdl::lint::rules() {
                 if is_rule_enabled(
                     &self.enabled_lint_tags,
                     &self.disabled_lint_tags,
@@ -137,7 +127,7 @@ impl Analysis {
             info!("enabled lint rules: {:?}", enabled_rules);
             info!("disabled lint rules: {:?}", disabled_rules);
         }
-        let config = wdl_analysis::Config::default()
+        let config = wdl::analysis::Config::default()
             .with_diagnostics_config(get_diagnostics_config(&self.exceptions))
             .with_ignore_filename(self.ignore_filename);
 
@@ -186,7 +176,7 @@ impl Default for Analysis {
             exceptions: Default::default(),
             enabled_lint_tags: TagSet::new(&[]),
             disabled_lint_tags: TagSet::new(&[]),
-            ignore_filename: None,
+            ignore_filename: Some(IGNORE_FILENAME.to_string()),
             init: Box::new(|| {}),
             progress: Box::new(|_, _, _| Box::pin(async {})),
         }
@@ -195,12 +185,12 @@ impl Default for Analysis {
 
 /// Warns about any unknown rules.
 fn warn_unknown_rules(exceptions: &HashSet<String>) {
-    let mut names = wdl_analysis::rules()
+    let mut names = wdl::analysis::rules()
         .iter()
         .map(|rule| rule.id().to_owned())
         .collect::<Vec<_>>();
 
-    names.extend(wdl_lint::rules().iter().map(|rule| rule.id().to_owned()));
+    names.extend(wdl::lint::rules().iter().map(|rule| rule.id().to_owned()));
 
     let mut unknown = exceptions
         .iter()
@@ -222,7 +212,7 @@ fn warn_unknown_rules(exceptions: &HashSet<String>) {
 /// Gets the rules as a diagnositics configuration with the excepted rules
 /// removed.
 fn get_diagnostics_config(exceptions: &HashSet<String>) -> DiagnosticsConfig {
-    DiagnosticsConfig::new(wdl_analysis::rules().into_iter().filter(|rule| {
+    DiagnosticsConfig::new(wdl::analysis::rules().into_iter().filter(|rule| {
         !exceptions
             .iter()
             .any(|exception| exception.eq_ignore_ascii_case(rule.id()))
@@ -253,7 +243,7 @@ fn get_lint_visitor(
     disabled_lint_tags: &TagSet,
     exceptions: &HashSet<String>,
 ) -> Linter {
-    Linter::new(wdl_lint::rules().into_iter().filter(|rule| {
+    Linter::new(wdl::lint::rules().into_iter().filter(|rule| {
         is_rule_enabled(
             enabled_lint_tags,
             disabled_lint_tags,

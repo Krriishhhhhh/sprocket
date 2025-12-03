@@ -5,7 +5,6 @@ members = [
     "crates/wdl",
     "crates/wdl-analysis",
     "crates/wdl-ast",
-    "crates/wdl-cli",
     "crates/wdl-doc",
     "crates/wdl-engine",
     "crates/wdl-format",
@@ -22,12 +21,13 @@ edition = "2024"
 authors = ["The Sprocket project contributors"]
 homepage = "https://sprocket.bio"
 repository = "https://github.com/stjude-rust-labs/sprocket"
-rust-version = "1.89.0"
+rust-version = "1.91.1"
 
 [workspace.dependencies]
 ammonia = "4.1.2"
 anyhow = "1.0.98"
 approx = "0.5.1"
+arrayvec = { version = "0.7.6", features = ["serde"] }
 bimap = "0.6.3"
 blake3 = { version = "1.8.2", features = ["mmap"] }
 bytesize = { version = "2.1.0", features = ["serde"] }
@@ -35,11 +35,11 @@ chrono = "0.4.41"
 clap = { version = "4.5.45", features = ["derive", "string"] }
 clap-verbosity-flag = { version = "3.0.3", features = ["tracing"] }
 clap_complete = "4.5.55"
-cloud-copy = { version = "0.4.0", features = ["cli"] }
+cloud-copy = { version = "0.5.0", features = ["cli"] }
 codespan-reporting = "0.12.0"
 colored = "3.0.0"
 convert_case = "0.8.0"
-crankshaft = { version = "0.6.0", path = "vendor/crankshaft/crankshaft", features = ["docker"] }
+crankshaft = { version = "0.7.0", path = "vendor/crankshaft/crankshaft", features = ["docker"] }
 dirs = "6.0.0"
 faster-hex = "0.10.0"
 figment = { version = "0.10.19", features = ["toml", "yaml"] }
@@ -62,13 +62,13 @@ macropol = "0.1.3"
 maud = "0.27.0"
 nonempty = "0.12.0"
 notify = "8.2.0"
+num_enum = "0.7.5"
 opener = "0.8.1"
 ordered-float = "5.0.0"
 parking_lot = "0.12.3"
 paste = "1.0.15"
 path-clean = "1.0.1"
 pathdiff = "0.2.3"
-pest = { version = "2.8.1", features = ["pretty-print"] }
 petgraph = "0.8.1"
 pretty_assertions = "1.4.1"
 pulldown-cmark = "0.13.0"
@@ -106,11 +106,12 @@ tracing = "0.1.41"
 tracing-indicatif = "0.3.9"
 tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+tracing-test = "0.2.5"
 url = "2.5.4"
 urlencoding = "2.1.3"
 uuid = "1.18.0"
 walkdir = "2.5.0"
-wdl = { version = "0.19.0", path = "crates/wdl", features = ["cli", "codespan", "engine", "lsp", "doc"] }
+wdl = { version = "0.20.0", path = "crates/wdl", features = ["engine", "lint", "lsp", "doc"] }
 which = "8.0.0"
 
 [workspace.lints.rust]
@@ -135,7 +136,7 @@ new_without_default = "allow"
 
 [package]
 name = "sprocket"
-version = "0.18.0"
+version = "0.19.0"
 description = "A command line tool for working with Workflow Description Language (WDL) documents"
 authors.workspace = true
 license.workspace = true
@@ -163,13 +164,16 @@ indexmap.workspace = true
 indicatif.workspace = true
 nonempty.workspace = true
 opener.workspace = true
-pest.workspace = true
+path-clean.workspace = true
 pretty_assertions.workspace = true
+regex.workspace = true
+reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml_ng.workspace = true
 similar.workspace = true
 strum.workspace = true
+thiserror.workspace = true
 tokio.workspace = true
 tokio-util.workspace = true
 toml.workspace = true

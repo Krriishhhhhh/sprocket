@@ -3,17 +3,16 @@
 use std::path::Path;
 
 use anyhow::anyhow;
-use wdl_analysis::Document;
-use wdl_engine::CancellationContext;
-use wdl_engine::EvaluatedTask;
-use wdl_engine::EvaluationError;
-use wdl_engine::EvaluationResult;
-use wdl_engine::Events;
-use wdl_engine::Inputs;
-use wdl_engine::Outputs;
-use wdl_engine::config::Config;
-use wdl_engine::v1::TaskEvaluator;
-use wdl_engine::v1::WorkflowEvaluator;
+use wdl::analysis::Document;
+use wdl::engine::CancellationContext;
+use wdl::engine::EvaluatedTask;
+use wdl::engine::EvaluationError;
+use wdl::engine::EvaluationResult;
+use wdl::engine::Events;
+use wdl::engine::Inputs;
+use wdl::engine::Outputs;
+use wdl::engine::config::Config;
+use wdl::engine::v1::TopLevelEvaluator;
 
 use crate::inputs::OriginPaths;
 
@@ -83,10 +82,11 @@ impl<'a> Evaluator<'a> {
                     })
                     .await?;
 
-                let evaluator = TaskEvaluator::new(self.config, cancellation, events).await?;
-
+                let evaluator =
+                    TopLevelEvaluator::new(self.output_dir, self.config, cancellation, events)
+                        .await?;
                 evaluator
-                    .evaluate(self.document, task, inputs, self.output_dir)
+                    .evaluate_task(self.document, task, inputs, self.output_dir)
                     .await
                     .and_then(EvaluatedTask::into_result)
             }
@@ -113,9 +113,11 @@ impl<'a> Evaluator<'a> {
                     })
                     .await?;
 
-                let evaluator = WorkflowEvaluator::new(self.config, cancellation, events).await?;
+                let evaluator =
+                    TopLevelEvaluator::new(self.output_dir, self.config, cancellation, events)
+                        .await?;
                 evaluator
-                    .evaluate(self.document, inputs, self.output_dir)
+                    .evaluate_workflow(self.document, inputs, self.output_dir)
                     .await
             }
         }
